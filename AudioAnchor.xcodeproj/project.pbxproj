@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -464,7 +464,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 5;
-				DEVELOPMENT_TEAM = 49JCDB9D59;
+				DEVELOPMENT_TEAM = C68JSXJ624;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = AudioAnchor/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -489,7 +489,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 5;
-				DEVELOPMENT_TEAM = 49JCDB9D59;
+				DEVELOPMENT_TEAM = C68JSXJ624;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = AudioAnchor/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
