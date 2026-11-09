@@ -59,16 +59,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStickyDefaults() {
         let arrivals = DeviceArrivals(devices: simply.allDevices)
         let isAnchored: (AudioDevice) -> Bool = { $0.name == Settings.anchoredDeviceName }
+        let mayTakeOver: (AudioDevice) -> Bool = { AppDelegate.mayTakeOver($0) }
         self.arrivals = arrivals
         stickyDefaults = [
             StickyDefault(label: "output", arrivals: arrivals,
                           read: { self.simply.defaultOutputDevice },
                           write: { $0.isDefaultOutputDevice = true },
-                          isExempt: isAnchored),
+                          isExempt: mayTakeOver, isAnchored: isAnchored, learnsChoices: true),
             StickyDefault(label: "system output", arrivals: arrivals,
                           read: { self.simply.defaultSystemOutputDevice },
                           write: { $0.isDefaultSystemOutputDevice = true },
-                          isExempt: isAnchored),
+                          isExempt: mayTakeOver, isAnchored: isAnchored, learnsChoices: false),
         ]
         defaultObservers = [Notification.Name.defaultOutputDeviceChanged, .defaultSystemOutputDeviceChanged].map {
             NotificationCenter.default.addObserver(forName: $0, object: nil, queue: .main) { _ in
@@ -103,6 +104,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         menu.addItem(.separator())
         menu.addItem(makeMenuItem(title: "Keep Current Output When Devices Connect", selector: #selector(AppDelegate.toggleKeepCurrent(_:)), isEnabled: Settings.keepsCurrentOnConnect))
+        menu.addItem(makeTakeoverMenu())
         menu.addItem(.separator())
         menu.addItem(makeMenuItem(title: "Check for Updates...", selector: #selector(SUUpdater.checkForUpdates(_:)), target: SUUpdater.shared()))
         menu.addItem(.separator())
@@ -145,6 +147,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Settings.isDisabled = !Settings.isDisabled
         Settings.isDisabled ? stop() : start()
         sender.state = Settings.isDisabled ? .on : .off
+    }
+
+    /// Devices that may become the default when they connect: the anchored
+    /// one, Bluetooth audio (you connect earbuds to use them), and the
+    /// take-over list (headphones etc.).
+    static func mayTakeOver(_ device: AudioDevice) -> Bool {
+        if device.name == Settings.anchoredDeviceName { return true }
+        if device.transportType == .bluetooth || device.transportType == .bluetoothLE { return true }
+        guard let uid = device.uid else { return false }
+        return Settings.takeoverDeviceUIDs.contains(uid)
+    }
+
+    private func makeTakeoverMenu() -> NSMenuItem {
+        let item = NSMenuItem(title: "Allowed to Take Over When Connected", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        let allowed = Settings.takeoverDeviceUIDs
+        for device in currentDevices where device.transportType != .builtIn {
+            let bluetooth = device.transportType == .bluetooth || device.transportType == .bluetoothLE
+            let entry = makeMenuItem(title: device.name + (bluetooth ? " (Bluetooth: always)" : ""),
+                                     selector: bluetooth ? nil : #selector(AppDelegate.toggleTakeover(_:)),
+                                     isEnabled: bluetooth || allowed.contains(device.uid ?? ""))
+            entry.representedObject = device.uid
+            submenu.addItem(entry)
+        }
+        item.submenu = submenu
+        return item
+    }
+
+    @objc private func toggleTakeover(_ sender: NSMenuItem) {
+        guard let uid = sender.representedObject as? String else { return }
+        var allowed = Settings.takeoverDeviceUIDs
+        if allowed.contains(uid) { allowed.remove(uid) } else { allowed.insert(uid) }
+        Settings.takeoverDeviceUIDs = allowed
+        sender.state = allowed.contains(uid) ? .on : .off
     }
 
     @objc private func toggleKeepCurrent(_ sender: NSButton) {
