@@ -17,8 +17,9 @@ let stickyLog = OSLog(subsystem: "dev.wata.AudioAnchor", category: "sticky")
 /// can be classified as "macOS auto-switched to a device that just appeared".
 final class DeviceArrivals {
     /// A default-device change to a device that appeared this recently counts
-    /// as macOS's auto-switch, not the user's choice.
-    static let window: TimeInterval = 4
+    /// as macOS's auto-switch (it lands within a few hundred ms). Kept short so
+    /// a manual pick right after plugging in is honoured, not reverted.
+    static let window: TimeInterval = 2
 
     private var knownUIDs: Set<String>
     private var arrivedAt = [String: Date]()
@@ -52,10 +53,13 @@ final class DeviceArrivals {
 /// Tracks one default-device slot (output, system output, ...) and undoes
 /// macOS's switch to a newly connected device.
 ///
-/// - `currentUID`: the device that is default right now (as far as we know).
-/// - `chosenUID`: the user's last deliberate choice. A change caused by the
-///   previous device disappearing is a forced fallback and does not update it,
-///   so re-plugging the device you were using is allowed to take over again.
+/// A connecting device may take over when `isExempt` says so: the anchored
+/// device, Bluetooth audio, and the persisted take-over list
+/// (`Settings.takeoverDeviceUIDs`). With `learnsChoices`, that list follows
+/// the user: picking a device by hand adds it, and switching away from a
+/// device that is still connected removes it. A change caused by the previous
+/// device disappearing is a forced fallback and teaches nothing, so
+/// re-plugging the device you were using lets it take over again.
 final class StickyDefault {
     private let label: String
     private let read: () -> AudioDevice?
@@ -63,23 +67,27 @@ final class StickyDefault {
     private let arrivals: DeviceArrivals
     /// Devices allowed to take over when they connect (e.g. the anchored one).
     private let isExempt: (AudioDevice) -> Bool
+    private let learnsChoices: Bool
+    private let isAnchored: (AudioDevice) -> Bool
 
     private var currentUID: String?
-    private var chosenUID: String?
     private var reverts = [(uid: String, at: Date)]()
 
     init(label: String,
          arrivals: DeviceArrivals,
          read: @escaping () -> AudioDevice?,
          write: @escaping (AudioDevice) -> Void,
-         isExempt: @escaping (AudioDevice) -> Bool) {
+         isExempt: @escaping (AudioDevice) -> Bool,
+         isAnchored: @escaping (AudioDevice) -> Bool,
+         learnsChoices: Bool) {
         self.label = label
         self.arrivals = arrivals
         self.read = read
         self.write = write
         self.isExempt = isExempt
+        self.isAnchored = isAnchored
+        self.learnsChoices = learnsChoices
         currentUID = read()?.uid
-        chosenUID = currentUID
     }
 
     /// Call on every default-device change and device-list change; it is
@@ -88,9 +96,9 @@ final class StickyDefault {
         guard let new = read(), let newUID = new.uid, newUID != currentUID else { return }
         let previous = currentUID.flatMap { AudioDevice.lookup(by: $0) }
 
+        let fresh = arrivals.isFresh(newUID)
         if Settings.keepsCurrentOnConnect,
-           arrivals.isFresh(newUID),
-           newUID != chosenUID,
+           fresh,
            !isExempt(new),
            let previous = previous,
            !tooManyReverts(of: newUID) {
@@ -101,13 +109,20 @@ final class StickyDefault {
             return // currentUID stays on `previous`
         }
 
-        if previous == nil {
-            os_log("%{public}@: previous device gone, macOS fell back to \"%{public}@\" (keeping choice %{public}@)",
-                   log: stickyLog, type: .default, label, new.name, chosenUID ?? "nil")
+        if let previous = previous {
+            os_log("%{public}@: default is now \"%{public}@\"%{public}@",
+                   log: stickyLog, type: .default, label, new.name, fresh ? " (allowed to take over)" : "")
+            // A pick made after the arrival window, not one forced by the
+            // anchor, is the user's: remember it for the next connect.
+            if learnsChoices, !fresh, !isAnchored(new), let previousUID = previous.uid {
+                var allowed = Settings.takeoverDeviceUIDs
+                allowed.remove(previousUID)
+                allowed.insert(newUID)
+                Settings.takeoverDeviceUIDs = allowed
+            }
         } else {
-            os_log("%{public}@: default is now \"%{public}@\"",
+            os_log("%{public}@: previous device gone, macOS fell back to \"%{public}@\"",
                    log: stickyLog, type: .default, label, new.name)
-            chosenUID = newUID
         }
         currentUID = newUID
     }

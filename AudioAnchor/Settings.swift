@@ -37,6 +37,17 @@ struct Settings {
         }
     }
 
+    /// Output devices (by UID) allowed to become the default when they
+    /// connect, e.g. headphones. Learned from manual picks; editable in the menu.
+    static var takeoverDeviceUIDs: Set<String> {
+        get {
+            Set(UserDefaults.standard.stringArray(forKey: .takeoverDeviceUIDs) ?? [])
+        }
+        set {
+            UserDefaults.standard.set(newValue.sorted(), forKey: .takeoverDeviceUIDs)
+        }
+    }
+
     static var anchoredDeviceName: String? {
         get {
             UserDefaults.standard.string(forKey: .anchoredDeviceName)
@@ -51,4 +62,5 @@ fileprivate extension String {
     static let isDisabled = "isDisabled"
     static let anchoredDeviceName = "anchoredDeviceName"
     static let keepsCurrentOnConnect = "keepsCurrentOnConnect"
+    static let takeoverDeviceUIDs = "takeoverDeviceUIDs"
 }
