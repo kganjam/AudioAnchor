@@ -14,6 +14,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let simply = SimplyCoreAudio()
     private var deviceListObserver: NSObjectProtocol?
     private var deviceObservers = [NSObjectProtocol]()
+    private var defaultObservers = [NSObjectProtocol]()
+    private var stickyDefaults = [StickyDefault]()
+    private var arrivals: DeviceArrivals?
     private lazy var currentDevices = simply.allOutputDevices
     private lazy var statusItem: NSStatusItem = {
         let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -36,13 +39,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupDevice()
         setupDeviceNotifications()
+        setupStickyDefaults()
         deviceListObserver = NotificationCenter.default.addObserver(forName: .deviceListChanged,
                                                                     object: nil,
-                                                                    queue: .main) { _ in
+                                                                    queue: .main) { notification in
             self.currentDevices = self.simply.allOutputDevices
+            self.arrivals?.update(added: notification.userInfo?["addedDevices"] as? [AudioDevice] ?? [],
+                                  removed: notification.userInfo?["removedDevices"] as? [AudioDevice] ?? [])
             self.setupMenu()
             self.setupDevice()
             self.setupDeviceNotifications()
+            self.stickyDefaults.forEach { $0.reconcile() }
+        }
+    }
+
+    /// Undo macOS's habit of switching output to whatever device was just
+    /// plugged in (USB speaker on a hub, dock audio, ...). The anchored device
+    /// is exempt: it still takes over whenever it connects.
+    private func setupStickyDefaults() {
+        let arrivals = DeviceArrivals(devices: simply.allDevices)
+        let isAnchored: (AudioDevice) -> Bool = { $0.name == Settings.anchoredDeviceName }
+        self.arrivals = arrivals
+        stickyDefaults = [
+            StickyDefault(label: "output", arrivals: arrivals,
+                          read: { self.simply.defaultOutputDevice },
+                          write: { $0.isDefaultOutputDevice = true },
+                          isExempt: isAnchored),
+            StickyDefault(label: "system output", arrivals: arrivals,
+                          read: { self.simply.defaultSystemOutputDevice },
+                          write: { $0.isDefaultSystemOutputDevice = true },
+                          isExempt: isAnchored),
+        ]
+        defaultObservers = [Notification.Name.defaultOutputDeviceChanged, .defaultSystemOutputDeviceChanged].map {
+            NotificationCenter.default.addObserver(forName: $0, object: nil, queue: .main) { _ in
+                self.stickyDefaults.forEach { $0.reconcile() }
+            }
         }
     }
 
@@ -53,6 +84,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         deviceObservers.forEach { NotificationCenter.default.removeObserver($0) }
         deviceObservers = []
+        defaultObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        defaultObservers = []
+        stickyDefaults = []
+        arrivals = nil
     }
 
     private func setupMenu() {
@@ -66,6 +101,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         currentDevices.forEach {
             menu.addItem(makeMenuItem(title: $0.name, selector: #selector(AppDelegate.anchor(_:)), isEnabled: $0.name == anchoredDeviceName))
         }
+        menu.addItem(.separator())
+        menu.addItem(makeMenuItem(title: "Keep Current Output When Devices Connect", selector: #selector(AppDelegate.toggleKeepCurrent(_:)), isEnabled: Settings.keepsCurrentOnConnect))
         menu.addItem(.separator())
         menu.addItem(makeMenuItem(title: "Check for Updates...", selector: #selector(SUUpdater.checkForUpdates(_:)), target: SUUpdater.shared()))
         menu.addItem(.separator())
@@ -108,6 +145,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Settings.isDisabled = !Settings.isDisabled
         Settings.isDisabled ? stop() : start()
         sender.state = Settings.isDisabled ? .on : .off
+    }
+
+    @objc private func toggleKeepCurrent(_ sender: NSButton) {
+        Settings.keepsCurrentOnConnect = !Settings.keepsCurrentOnConnect
+        sender.state = Settings.keepsCurrentOnConnect ? .on : .off
     }
 
     @objc private func anchor(_ sender: NSButton) {

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		5A76F84126E664CE0029486E /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A76F84026E664CE0029486E /* Settings.swift */; };
+		5A76F84126E664CE0029486F /* StickyDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A76F84026E664CE0029486F /* StickyDefault.swift */; };
 		5A8787D626B827D70030D814 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 5A8787D526B827D70030D814 /* Sparkle */; };
 		5A973A9226B2FA37006BC3E9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A973A9126B2FA37006BC3E9 /* AppDelegate.swift */; };
 		5A973A9426B2FA3A006BC3E9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5A973A9326B2FA3A006BC3E9 /* Assets.xcassets */; };
@@ -37,6 +38,7 @@
 
 /* Begin PBXFileReference section */
 		5A76F84026E664CE0029486E /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		5A76F84026E664CE0029486F /* StickyDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickyDefault.swift; sourceTree = "<group>"; };
 		5A973A8E26B2FA37006BC3E9 /* AudioAnchor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AudioAnchor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A973A9126B2FA37006BC3E9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		5A973A9326B2FA3A006BC3E9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 			children = (
 				5A973A9126B2FA37006BC3E9 /* AppDelegate.swift */,
 				5A76F84026E664CE0029486E /* Settings.swift */,
+				5A76F84026E664CE0029486F /* StickyDefault.swift */,
 				5A973A9326B2FA3A006BC3E9 /* Assets.xcassets */,
 				5A973A9526B2FA3A006BC3E9 /* MainMenu.xib */,
 				5A973A9826B2FA3A006BC3E9 /* Info.plist */,
@@ -292,6 +295,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5A76F84126E664CE0029486E /* Settings.swift in Sources */,
+				5A76F84126E664CE0029486F /* StickyDefault.swift in Sources */,
 				5A973A9226B2FA37006BC3E9 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -390,7 +394,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -445,7 +449,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -471,7 +475,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wata.AudioAnchor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -496,7 +500,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wata.AudioAnchor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -518,7 +522,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wata.AudioAnchorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -540,7 +544,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 11.3;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.wata.AudioAnchorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
