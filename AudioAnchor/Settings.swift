@@ -27,6 +27,16 @@ struct Settings {
         }
     }
 
+    /// Default on: undo macOS's switch to a newly connected device.
+    static var keepsCurrentOnConnect: Bool {
+        get {
+            UserDefaults.standard.object(forKey: .keepsCurrentOnConnect) as? Bool ?? true
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: .keepsCurrentOnConnect)
+        }
+    }
+
     static var anchoredDeviceName: String? {
         get {
             UserDefaults.standard.string(forKey: .anchoredDeviceName)
@@ -40,4 +50,5 @@ struct Settings {
 fileprivate extension String {
     static let isDisabled = "isDisabled"
     static let anchoredDeviceName = "anchoredDeviceName"
+    static let keepsCurrentOnConnect = "keepsCurrentOnConnect"
 }
